@@ -24,6 +24,9 @@ data = requests.get(url).text
 # Create an instance of BeautifulSoup
 soup = BeautifulSoup(data, 'html.parser')
 
+# Locate all tables with the "itables" class
+tables = soup.find_all('table', class_='itables')
+
 # Create a list to store all the URLs in
 url_list = list()
 
@@ -36,19 +39,46 @@ total_urls = 0
 # Create a number to track the total amount of University names
 total_university_names = 0
 
+# Change the max width of the dataframe to ensure the information fits
+pd.set_option('display.max_colwidth', 1000)
+
 # __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ #
 # --------------------------------------------------------- #   
 # __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ # 
 
+# -- Function to track the names of the Universities -- #
+
+for name in soup.find_all("td", class_="pbe"):
+    # Strip the text and separate each <td> with a comma
+    name = (name.get_text(strip=True, separator=', '))
+
+    # Delete all text after the first comma
+    result = name.partition(',')[0]
+
+    # Print the name of the University (optional)
+    # print(result)
+    
+    # Add the base_url to the list
+    university_name_list.append(result)
+
+    # Increment the total amount of University names
+    total_university_names += 1  
+
+# __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ #
+# --------------------------------------------------------- #   
+# __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ # 
+
+# -- Function to track all URLs -- #
+
 # Check if the item contains all required characters
 for a in soup.find_all('a', href=True):
-    # Print all URLS found
-    print("Found the URL:", a['href'])
+    # Print all URLS found (optional)
+    # print("Found the URL:", a['href'])
     
     # Check to see if the characters "id=" are contained in the URL
     if 'id=' in a['href']:
-        # Print a statement
-        print(" -- Found a URL that has '&id=' -- ")
+        # Print a statement (optional)
+        # print(" -- Found a URL that has '&id=' -- ")
         
         # Add the base_url to the list
         url_list.append(base_url + a['href'])
@@ -59,103 +89,42 @@ for a in soup.find_all('a', href=True):
     elif ('id=' in a['href'] == 0):
         print('sad')
         break
-      
-      
+  
 # __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ #
 # --------------------------------------------------------- #   
 # __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ # 
-        
-# Locate all tables with the "itables" class
-tables = soup.find_all('table', class_='itables')
 
-for name in soup.find_all("td", class_="pbe"):
-    # Strip the text and separate each <td> with a comma
-    name = (name.get_text(strip=True, separator=', '))
+# -- Dataframes Initialization and Functions -- #
 
-    # Delete all text after the first comma
-    result = name.partition(',')[0]
+df_lst_uni_name = pd.DataFrame(university_name_list)
+df_lst_url = pd.DataFrame(url_list)
 
-    # Print the name of the University
-    print(result)
+# Function to merge two dataframes together
+def MergeTwoDataframes(dataframe1, dataframe2):
+    # Merge the dataframes column-wise
+    df_merged = pd.concat([df_lst_uni_name + ',', df_lst_url], axis=1)
     
-    # Add the base_url to the list
-    university_name_list.append(result)
+    # Return the merged dataframe
+    return df_merged
 
-    # Increment the total amount of University names
-    total_university_names += 1
-  
 # __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ #
 # --------------------------------------------------------- #   
 # __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ # 
   
 # Print out each list
+print('URL List: ')
 pprint(url_list)
 
+print('University Name List: ')
 pprint(university_name_list)
 
-# Change the max width of the dataframe to ensure the information fits
-pd.set_option('display.max_colwidth', 1000)
-
-# Dataframe
-df1 = pd.DataFrame(university_name_list)
-df2 = pd.DataFrame(url_list)
-
-# Merge the dataframes column-wise
-df_merged = pd.concat([df1 + ',', df2], axis=1)
-
-print(df_merged)
+# Merge the two dataframes and print them
+merged = MergeTwoDataframes(df_lst_uni_name, df_lst_url)
+print ('Merged Dataframes: University Name List, URL List')
+print(merged)
 
 # Print the total amount of URLs found
 print('Total URLs Found: ' + str(total_urls))
 
 # Print the total amount of University names found
 print('University Names Found: ' + str(total_university_names))
-
-# __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ #
-# --------------------------------------------------------- #   
-# __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ # 
-
-# Locate all tables with the "itables" class
-tables = soup.find_all('table', class_='itables')
-
-for name in soup.find_all("td", class_="pbe"):
-  # Strip the text and separate each <td> with a comma
-  name = (name.get_text(strip=True, separator=', '))
-    
-  # Delete all text after the first comma
-  result = name.partition(',')[0]
-  
-  # Loop through the "ipeds hoverID" class to get the IPEDS IDs and OPE IDs
-  for ids in soup.find_all("p", class_="ipeds hoverID"):
-    id = ids.get_text(strip=True, separator=', ')
-    
-    # Full IPEDS ID
-    ipeds_id = id.partition('|')[0]
-    
-    # Full OPE ID
-    ope_id = id.partition('|')[2]
-    
-  print(result)
-  print(ipeds_id)
-  print(ope_id)
-
-# __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ #
-# --------------------------------------------------------- #   
-# __--__--__--__--__--__--__--__--__--__--__--__--__--__--_ # 
-
-# This section will include the main GUI to access each part of the program
-
-def window():
-    app = QApplication(sys.argv)
-    win = QMainWindow()
-    win.setGeometry(200, 200, 300, 300)
-    win.setWindowTitle("Basic")
-    
-    label = QtWidgets.QLabel(win)
-    label.setText("Label!")
-    label.move(50, 50)
-    
-    win.show()
-    sys.exit(app.exec_())
-    
-window()
